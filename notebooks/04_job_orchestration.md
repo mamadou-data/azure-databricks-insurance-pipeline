@@ -1,148 +1,96 @@
 # Orchestration du Pipeline – Azure Databricks
 
-## Vue d’ensemble
+## 🎯 Objectif
 
-Afin d’industrialiser le workflow de transformation des données, un Job Databricks a été mis en place pour orchestrer l’architecture Medallion.
-
-Ce job automatise l’exécution des trois couches :
-
-1. Bronze – Ingestion des données brutes
-2. Silver – Nettoyage et transformation
-3. Gold – Modélisation analytique (Schéma en étoile)
-
-Cette orchestration garantit la reproductibilité, l’automatisation et le suivi des traitements.
+Ce document décrit la mise en production du pipeline via un **Job Azure Databricks planifié**, garantissant une exécution automatisée, contrôlée et supervisée.
 
 ---
 
-## Architecture du Pipeline
+## ⚙️ Configuration du Job
 
-Le pipeline suit un modèle séquentiel avec dépendances :
+Le job est défini via le fichier :
 
-Bronze → Silver → Gold
+pipeline/databricks-job-config.json
 
-Chaque tâche démarre uniquement si la précédente s’est exécutée avec succès.
+### Paramètres techniques :
 
----
-
-## Configuration du Job
-
-Le Job Databricks comprend :
-
-- Un cluster partagé (ou cluster dédié au job)
-- Des tâches ordonnées avec dépendances explicites
-- Un système de monitoring des exécutions
-- L’auto-termination activée pour optimiser les coûts
+- Cluster dédié au job
+- Auto-termination activée
+- Dépendances explicites entre tâches
+- Planification automatique configurée (Scheduler Databricks)
 
 ---
 
-## Description des Tâches
+## 🕒 Planification Automatique
 
-### 1. Ingestion Bronze
+Le pipeline est exécuté automatiquement selon une fréquence définie via le scheduler Databricks.
 
-Notebook : `01_bronze_ingestion.py`
+Caractéristiques :
 
-Responsabilités :
-- Chargement du dataset CSV dans Azure Data Lake (container bronze)
-- Conversion au format Delta Lake
-- Conservation des données sources sans modification
+- Exécution quotidienne planifiée
+- Aucun déclenchement manuel nécessaire
+- Historique complet des runs disponible
+- Possibilité de relancer un run spécifique
 
-Objectif :
-Assurer la traçabilité et l’intégrité des données brutes.
-
----
-
-### 2. Transformation Silver
-
-Notebook : `02_silver_transformation.py`
-
-Responsabilités :
-- Conversion des colonnes Yes/No en booléens
-- Parsing des champs techniques :
-  - max_torque → torque_nm, torque_rpm
-  - max_power → power_bhp, power_rpm
-- Suppression des colonnes inutiles
-- Vérification de la cohérence des données
-- Écriture du dataset nettoyé au format Delta (container silver)
-
-Objectif :
-Standardiser et structurer les données pour un usage analytique.
+Cette planification permet d’intégrer le pipeline dans un environnement proche de la production.
 
 ---
 
-### 3. Modélisation Gold
+## 🔁 Logique d’Orchestration
 
-Notebook : `03_gold_modeling.py`
+Le workflow suit un enchaînement conditionnel :
 
-Responsabilités :
-- Construction d’un modèle en étoile :
-  - fact_policy
-  - dim_customer
-  - dim_vehicle
-  - dim_region
-- Génération de clés de substitution
-- Stockage des tables analytiques optimisées au format Delta (container gold)
+1. Bronze
+2. Silver (si Bronze succès)
+3. Gold (si Silver succès)
 
-Objectif :
-Préparer les données pour l’exploitation BI et les analyses avancées.
+En cas d’échec :
+- Le pipeline s’arrête immédiatement
+- L’erreur est journalisée
+- Le statut du run passe en "Failed"
 
----
-
-## Bénéfices de l’Orchestration
-
-La mise en place d’un Job Databricks permet :
-
-- L’automatisation complète du pipeline
-- Un suivi centralisé des exécutions
-- La gestion des erreurs
-- La reproductibilité des traitements
-- La scalabilité de la plateforme
-- Le contrôle des coûts grâce à l’auto-termination
+Cette logique garantit la cohérence des données analytiques.
 
 ---
 
-## Flux d’Exécution
+## 📊 Monitoring et Observabilité
 
-1. Déclenchement manuel ou planifié du job
-2. Exécution de la couche Bronze
-3. Si succès → exécution Silver
-4. Si succès → exécution Gold
-5. Données finales prêtes pour consommation analytique
+Chaque exécution fournit :
 
----
+- Logs détaillés par tâche
+- Durée d’exécution
+- Statut global
+- Visualisation des dépendances
 
-## Monitoring
-
-Chaque exécution du job fournit :
-
-- Les logs détaillés
-- La durée d’exécution
-- Le statut (Succès / Échec)
-- Les messages d’erreur le cas échéant
-
-Cela permet une supervision efficace et un diagnostic rapide.
+Le suivi est centralisé dans l’interface Databricks.
 
 ---
 
-## Perspectives d’Amélioration
+## 💰 Optimisation des Ressources
 
-- Mise en place d’une planification automatique (quotidienne / hebdomadaire)
-- Ajout d’alertes en cas d’échec
-- Intégration d’un pipeline CI/CD
-- Implémentation de contrôles qualité des données avant la couche Gold
-- Connexion à une couche BI (Power BI / Databricks SQL)
+Pour maîtriser les coûts cloud :
+
+- Le cluster démarre uniquement lors du run
+- Auto-termination activée
+- Aucun cluster permanent
+
+Cette configuration est adaptée aux pipelines batch analytiques.
 
 ---
 
-## Conclusion
+## 🔐 Bonnes Pratiques Appliquées
 
-La mise en place de cette orchestration transforme ce projet en une plateforme Data Engineering de niveau professionnel.
+- Architecture Medallion respectée
+- Format Delta Lake (ACID, performance)
+- Séparation claire des responsabilités
+- Orchestration centralisée
+- Planification automatisée
 
-Ce projet démontre des compétences concrètes en :
+---
 
-- Azure Databricks
-- Azure Data Lake Gen2
-- Delta Lake
-- Architecture Medallion
-- Modélisation analytique
-- Industrialisation des pipelines
-- Bonnes pratiques Cloud Data Engineering
+## 🚀 Évolutions Possibles
+
+- Alertes automatiques en cas d’échec
+- Intégration CI/CD (Azure DevOps)
+- Tests de qualité des données
+- Intégration Power BI / Databricks SQL
