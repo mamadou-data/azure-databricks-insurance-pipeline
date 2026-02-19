@@ -9,12 +9,41 @@ L’objectif est de transformer des données brutes vers des données analytique
 Le dataset utilisé est issu de Kaggle : *Insurance Claims* (58 592 lignes, 41 colonnes).
 
 ---
+## 💼 Problématique métier
+
+Une compagnie d’assurance souhaite :
+
+- Centraliser ses données contrats et sinistres
+- Nettoyer les données issues de différents systèmes
+- Disposer d’un modèle analytique fiable pour :
+  - Analyse des primes
+  - Analyse des risques
+  - Analyse régionale
+
+---
 
 ## 🏗 Architecture d’ensemble
 
 Le pipeline suit une approche structurée :
+```
+CSV (Raw)
+   ↓
+Bronze (Delta Raw)
+   ↓
+Silver (Cleaned)
+   ↓
+Gold (Star Schema)
+   ↓
+BI / Analytics
+```
+---
 
+## ⚡ Optimisations mises en place
 
+- Format Delta Lake pour performance et ACID
+- Partitionnement des tables Gold
+- Auto-termination du cluster
+- Architecture modulaire évolutive
 
 ---
 
@@ -113,7 +142,7 @@ Les **captures d’écran** sont disponibles dans le dossier :
 |------------------------------|---------------------------------------------------------------|
 | `adls_containers.png`         | Containers Bronze / Silver / Gold dans Azure Data Lake Gen2  |
 | `databricks_cluster.png`      | Configuration du cluster Databricks                           |
-| `delta_tables.png`            | Tables Gold créées au format Delta                            |
+
 
 ---
 
@@ -141,7 +170,6 @@ Les **captures d’écran** sont disponibles dans le dossier :
 
 Voici des pistes d’amélioration futures :
 
-- Planification automatique via Databricks Scheduler
 - Intégration d’alertes en cas d’échec
 - Connecteur vers Databricks SQL Warehouse / Power BI
 - Contrôles de qualité automatisés
