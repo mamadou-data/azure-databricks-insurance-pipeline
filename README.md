@@ -47,13 +47,22 @@ BI / Analytics
 
 ---
 
+---
+
+## 🏭 Industrialisation & Bonnes Pratiques
+
+- Architecture Medallion (séparation claire des couches)
+- Format Delta Lake (ACID, performance, versioning)
+- Orchestration centralisée via Databricks Job
+- Planification automatique
+- Gestion des dépendances et arrêt en cas d’échec
+- Optimisation des ressources cloud
+
+---
+
 ## 📁 Structure du repositor
 ```
 azure-databricks-insurance-pipeline/
-│
-├── architecture/
-│ ├── architecture-diagram.png
-│ └── architecture-description.md
 │
 ├── data/
 │ └── insurance_claims_sample.csv
@@ -70,7 +79,7 @@ azure-databricks-insurance-pipeline/
 ├── screenshots/
 │ ├── adls_containers.png
 │ ├── databricks_cluster.png
-│ ├── delta_tables.png
+│ ├── job-architecture.png
 │
 └── README.md
 ```
@@ -117,18 +126,23 @@ Objectif :
 
 ---
 
-## ⚙ Orchestration du Pipeline
+## ⚙ Orchestration & Planification
 
-La définition du job Databricks (fichier JSON) est disponible dans :
-* pipeline/databricks-job-config.json
+La définition du job Databricks est disponible dans :
+* `pipeline/databricks-job-config.json`
 
-Ce job exécute :
+Le pipeline est orchestré via un **Job Azure Databricks planifié automatiquement**.
 
-1. Bronze  
-2. Silver  
-3. Gold
+Caractéristiques :
 
-de façon séquentielle, avec auto-termination du cluster.
+- Exécution séquentielle : Bronze → Silver → Gold
+- Dépendances explicites entre tâches
+- Planification automatique via scheduler Databricks
+- Historique complet des runs
+- Monitoring intégré
+- Auto-termination du cluster pour optimisation des coûts
+
+Cette configuration rapproche le projet d’un environnement de production réel.
 
 ---
 
@@ -142,7 +156,7 @@ Les **captures d’écran** sont disponibles dans le dossier :
 |------------------------------|---------------------------------------------------------------|
 | `adls_containers.png`         | Containers Bronze / Silver / Gold dans Azure Data Lake Gen2  |
 | `databricks_cluster.png`      | Configuration du cluster Databricks                           |
-
+| `job-architecture.png`      | l'image de l'exécution des différentes tasks                           |
 
 ---
 
