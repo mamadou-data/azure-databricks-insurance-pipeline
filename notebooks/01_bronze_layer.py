@@ -8,9 +8,6 @@ spark.conf.set(
 )
 
 
-# COMMAND ----------
-
-# DBTITLE 1,Cell 2
 # Teste
 dbutils.fs.mounts()
 
@@ -20,24 +17,16 @@ if files:
 else:
     print("The bronze container is empty (no files or folders found)")
 
-# COMMAND ----------
 
-# MAGIC %md
-# MAGIC Afficher le répertoire
-
-# COMMAND ----------
+# Afficher le répertoire
 
 display(
     dbutils.fs.ls("abfss://bronze@stinsuranceanalytics.dfs.core.windows.net/")
 )
 
 
-# COMMAND ----------
 
-# MAGIC %md
-# MAGIC Lecture du fichier
-
-# COMMAND ----------
+# Lecture du fichier
 
 df_raw = spark.read.csv(
     "abfss://bronze@stinsuranceanalytics.dfs.core.windows.net/insurance_claims.csv",
@@ -48,12 +37,7 @@ df_raw = spark.read.csv(
 display(df_raw)
 
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC on écrit en format Delta
-
-# COMMAND ----------
+# On écrit en format Delta
 
 df_raw.write.format("delta").mode("overwrite").save(
     "abfss://bronze@stinsuranceanalytics.dfs.core.windows.net/insurance_raw"
