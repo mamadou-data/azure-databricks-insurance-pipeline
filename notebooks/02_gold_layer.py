@@ -8,17 +8,9 @@ spark.conf.set(
     storage_account_key
 )
 
-# COMMAND ----------
+## Objectif : créer des tables analytiques propres pour Power BI
 
-# MAGIC %md
-# MAGIC ## Objectif : créer des tables analytiques propres pour Power BI
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 1) Lire la Silver
-
-# COMMAND ----------
+# 1) Lire la Silver
 
 from pyspark.sql.functions import col, monotonically_increasing_id
 
@@ -28,19 +20,11 @@ df = spark.read.format("delta").load(silver_path)
 display(df)
 
 
-# COMMAND ----------
+# 2) DIMENSIONS
 
-# MAGIC %md
-# MAGIC 2) DIMENSIONS
+# 2.1 dim_customer
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 2.1 dim_customer
-# MAGIC
-# MAGIC On prend les attributs client/contrat “stables”.
-
-# COMMAND ----------
+# On prend les attributs client/contrat “stables”.
 
 from pyspark.sql.functions import sha2, concat_ws
 
@@ -53,13 +37,7 @@ dim_customer = (
 
 display(dim_customer.limit(10))
 
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC 2.2 dim_region
-
-# COMMAND ----------
 
 dim_region = (
     df.select("region_code", "region_density")
@@ -70,15 +48,8 @@ dim_region = (
 
 display(dim_region.limit(10))
 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 2.3 dim_vehicle
-# MAGIC
-# MAGIC On regroupe les attributs véhicule + les champs parsés.
-
-# COMMAND ----------
+# 2.3 dim_vehicle
+# On regroupe les attributs véhicule + les champs parsés.
 
 vehicle_cols = [
     "segment", "model", "fuel_type", "engine_type", "transmission_type",
@@ -98,21 +69,12 @@ dim_vehicle = (
 
 display(dim_vehicle.limit(10))
 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 3) FACT TABLE
+# 3) FACT TABLE
 
 
-# MAGIC %md
-# MAGIC 3.1 fact_policy
-# MAGIC
-# MAGIC On relie la policy aux dimensions + la mesure claim_status.
-# MAGIC
-# MAGIC On va faire des joins avec les mêmes règles de clés.
-
-# COMMAND ----------
+#  3.1 fact_policy
+# On relie la policy aux dimensions + la mesure claim_status.
+# On va faire des joins avec les mêmes règles de clés.
 
 fact_base = df.select(
     "policy_id", "claim_status",
@@ -152,13 +114,7 @@ fact_policy = fact.select(
 
 display(fact_policy.limit(10))
 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 4) Écrire en Gold (Delta)
-
-# COMMAND ----------
+# 4) Écrire en Gold (Delta)
 
 gold_base = "abfss://gold@stinsuranceanalytics.dfs.core.windows.net/insurance_star"
 
@@ -175,14 +131,9 @@ gold_base = "abfss://gold@stinsuranceanalytics.dfs.core.windows.net/insurance_st
  .save(f"{gold_base}/fact_policy"))
 
 
-# COMMAND ----------
+# 5) Contrôles rapides qualité (à faire)
 
-# MAGIC %md
-# MAGIC 5) Contrôles rapides qualité (à faire)
-# MAGIC
-# MAGIC 5.1 Vérifier les clés nulles (joins)
-
-# COMMAND ----------
+# 5.1 Vérifier les clés nulles (joins)
 
 from pyspark.sql.functions import sum as fsum, when
 
@@ -193,18 +144,11 @@ fact_policy.select(
 ).show()
 
 
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ## Enregistrer tes tables Gold dans le Metastore
-
-# COMMAND ----------
 
 spark.conf.set(
   f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
   storage_account_key
 )
-
-# COMMAND ----------
 
 gold_base = "abfss://gold@stinsuranceanalytics.dfs.core.windows.net/insurance_star"
