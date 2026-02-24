@@ -8,12 +8,7 @@ spark.conf.set(
     storage_account_key
 )
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 1 — Lire les données Bronze (Delta)
-
-# COMMAND ----------
+# Étape 1 — Lire les données Bronze (Delta)
 
 df = spark.read.format("delta").load(
     "abfss://bronze@stinsuranceanalytics.dfs.core.windows.net/insurance_raw"
@@ -21,13 +16,7 @@ df = spark.read.format("delta").load(
 
 display(df)
 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 2 — Conversion Yes/No → Boolean
-
-# COMMAND ----------
+# Étape 2 — Conversion Yes/No → Boolean
 
 from pyspark.sql.functions import when, col
 
@@ -42,12 +31,7 @@ for c in bool_columns:
     )
 
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 3 — Parser max_torque
-
-# COMMAND ----------
+# Étape 3 — Parser max_torque
 
 from pyspark.sql.functions import regexp_extract
 
@@ -62,12 +46,7 @@ df = df.withColumn(
 )
 
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 4 — Parser max_power
-
-# COMMAND ----------
+# Étape 4 — Parser max_power
 
 df = df.withColumn(
     "power_bhp",
@@ -79,38 +58,18 @@ df = df.withColumn(
     regexp_extract(col("max_power"), r"@(\d+)", 1).cast("int")
 )
 
-
-# COMMAND ----------
-
 display(df)
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 5 — Nettoyage colonnes inutiles
-
-# COMMAND ----------
+# Étape 5 — Nettoyage colonnes inutiles
 
 df = df.drop("max_torque", "max_power")
 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Étape 6 — Vérifications qualité
-
-# COMMAND ----------
+# Étape 6 — Vérifications qualité
 
 df.filter(col("customer_age") < 18).count()
 df.filter(col("vehicle_age") < 0).count()
 
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC Étape 7 — Écriture Silver en Delta
-
-# COMMAND ----------
 
 df.write.format("delta").mode("overwrite").save(
     "abfss://silver@stinsuranceanalytics.dfs.core.windows.net/insurance_clean"
